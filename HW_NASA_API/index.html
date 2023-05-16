@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EPIC NASA API Request Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #F9EDDA;
+    }
+
+    h1 {
+      text-align: center;
+      color: #FEA430;
+      text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+    }
+
+    form {
+      width: 50%;
+      margin: 0 auto;
+      background-color: #FFF;
+      padding: 30px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #444;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #CCC;
+      border-radius: 7px;
+    }
+
+    button[type="submit"] {
+      background-color: #fbcc9d;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #9DCCFB;
+    }
+
+    select {
+      padding: 0.5rem;
+      width: 100%;
+      border-radius: 0.25rem;
+      border: 2px solid #CCC;
+      margin-bottom: 20px;
+      background-color: #FFF;
+      color: #555;
+    }
+
+    .validation-message {
+      color: #E74C3C;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    #image-container {
+      margin-top: 50px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #image-container img {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+<h1>EPIC NASA API Request Form</h1>
+<form id="request-form">
+  <label for="name">Name:</label>
+  <input type="text" id="name" name="name" required>
+  <div id="name-validation" class="validation-message"></div>
+
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" required>
+  <div id="email-validation" class="validation-message"></div>
+
+  <label for="parameters">API Parameters:</label>
+  <select id="parameters" name="parameters" required>
+    <option value="">Select a parameter</option>
+    <option value="natural">Natural</option>
+    <option value="enhanced">Enhanced</option>
+  </select>
+  <div id="parameters-validation" class="validation-message"></div>
+
+  <button type="submit">Submit</button>
+</form>
+<div id="image-container"></div>
+
+<script>
+  // Get form elements
+  const form = document.querySelector('#request-form');
+  const nameInput = document.querySelector('#name');
+  const emailInput = document.querySelector('#email');
+  const parametersInput = document.querySelector('#parameters');
+
+   // Listen for form submission
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    // Validate form data
+    clearValidationMessages();
+
+    if (!validateName(nameInput.value)) {
+      displayValidationMessage('name', 'Please enter a valid name.');
+      return;
+    }
+
+    if (!validateEmail(emailInput.value)) {
+      displayValidationMessage('email', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!parametersInput.value) {
+      displayValidationMessage('parameters', 'Please select API parameters.');
+      return;
+    }
+
+    // Build API request URL
+    const apiEndpoint = 'https://api.nasa.gov/EPIC/api/natural';
+    const apiKey = 'DEMO_KEY';
+    const apiUrl = `${apiEndpoint}?api_key=${apiKey}&${parametersInput.value}`;
+
+    // Fetch data from API
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      displayValidationMessage('parameters', 'An error occurred while fetching data from the API.');
+      return;
+    }
+
+    const data = await response.json();
+
+    // Display images on page
+    const imageContainer = document.querySelector('#image-container');
+    imageContainer.innerHTML = '';
+
+    if (data.length === 0) {
+      displayValidationMessage('parameters', 'No images found for the selected parameters.');
+      return;
+    }
+
+    data.forEach((image) => {
+      const imageUrl = `https://api.nasa.gov/EPIC/archive/natural/${image.date.split(' ')[0].replace(/-/g, '/')}/png/${image.image}.png?api_key=${apiKey}`;
+      const imageElement = document.createElement('img');
+      imageElement.src = imageUrl;
+      imageContainer.appendChild(imageElement);
+    });
+  });
+
+  // Validate name input
+  function validateName(name) {
+    return /^[a-zA-Z ]+$/.test(name);
+  }
+
+  // Validate email input
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Display validation message for a specific field
+  function displayValidationMessage(field, message) {
+    const validationMessage = document.querySelector(`#${field}-validation`);
+    validationMessage.textContent = message;
+  }
+
+  // Clear all validation messages
+  function clearValidationMessages() {
+    const validationMessages = document.querySelectorAll('.validation-message');
+    validationMessages.forEach((message) => {
+      message.textContent = '';
+    });
+  }
+</script>
+</body>
+</html>
